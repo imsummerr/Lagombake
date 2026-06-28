@@ -310,6 +310,9 @@
 <header>
   <h1>Lagombake</h1>
   <p>เลือกเมนูที่ต้องการแล้วกดบันทึก</p>
+  <div style="margin-top:10px;background:#FFF8E7;border:1px solid #E8C97A;border-radius:8px;padding:9px 14px;font-size:13px;color:#7A5C1E;line-height:1.6;display:inline-block;">
+    ☀️ <strong>สั่งวันนี้ สินค้าจะได้รับในวันถัดไป</strong><br>ถ้าต้องการวันอื่น โปรดระบุในหมายเหตุ
+  </div>
 </header>
 
 <div class="container">
@@ -326,7 +329,7 @@
       <div class="cat-left">
         <div class="cat-check" id="check-drink"></div>
         <span>เมนูน้ำ</span>
-        <span class="cat-price">35 ฿ | 3 แก้ว 100 ฿</span>
+        <span class="cat-price">35 ฿ | มัทฉะ 45 ฿ | 3 แก้ว 100 ฿</span>
       </div>
       <span class="cat-arrow" id="arrow-drink">▼</span>
     </button>
@@ -334,6 +337,7 @@
       <p style="font-size:12px;color:var(--muted);margin-top:12px;margin-bottom:2px;">
         กด + เพื่อเพิ่มจำนวน เลือกความหวานและบุกได้แต่ละแก้ว
       </p>
+
       <div id="drink-list"></div>
     </div>
   </div>
@@ -419,14 +423,17 @@
 /* ═══════════════════════════════════════════════════
    CONFIG
 ═══════════════════════════════════════════════════ */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6L9XaxC5Wgawrpd0GHW8JrfwYUlEW0Lh-xbE_DJNFFBcP3LhIJNVEpHNDLxq82Y0/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyRT5Q1ABfy_c9maTCTyUxWMxlzkx9sSVYY6Y86OGd3NvL1LTPC4pxPBsFORCUfCOj0/exec';
 
 const DRINKS = [
   'อเมริกาโน่','เอสเพรสโซ่','คาปูชิโน่','ลาเต้','มอคค่า',
   'ชาไทย','ชามะนาว','ชาเขียว','น้ำลำไย','โกโก้','นมสด',
-  'น้ำส้ม','นมชมพู','เพียวมัทฉะ','มัทฉะลาเต้','มัทฉะเลมอนเนด',
+  'น้ำส้ม','นมชมพู','นมสดน้ำผึ้ง','นมสดคาราเมล',
+  'เพียวมัทฉะ','มัทฉะลาเต้','มัทฉะเลมอนเนด',
   'มัทฉะน้ำส้ม','สตรอเบอรี่นมสด'
 ];
+// เมนูที่ราคา 45 บาท
+const DRINKS_45 = ['เพียวมัทฉะ','มัทฉะลาเต้','มัทฉะเลมอนเนด','มัทฉะน้ำส้ม'];
 const NO_SWEET   = 'น้ำลำไย';
 const SWEETNESS  = ['มาก','ปกติ','น้อย','ไม่หวาน'];
 
@@ -498,7 +505,9 @@ function renderDrinkList(){
   const el = document.getElementById('drink-list');
   el.innerHTML = DRINKS.map(name => `
     <div class="row-item" id="drink-row-${eid(name)}">
-      <span class="row-name">${name}</span>
+      <span class="row-name">
+        ${name}${DRINKS_45.includes(name) ? '<span style="font-size:11px;color:var(--muted);margin-left:6px;background:var(--sand);padding:1px 7px;border-radius:20px;">45 ฿</span>' : ''}
+      </span>
       <button class="add-variant-btn" onclick="addVariant('${name}')">+ เลือก</button>
     </div>
     <div id="dpanel-${eid(name)}"></div>
@@ -810,8 +819,28 @@ function updateSummary(){
           lines.push({ text:`${name}${qTxt} (${sw}${bTxt})`, price:null });
         });
       });
-      const drinkCost = Math.floor(totalQty/3)*100 + (totalQty%3)*35;
-      lines.push({ text:`รวมน้ำ ${totalQty} แก้ว`, price: drinkCost });
+      // คำนวณราคา: มัทฉะ 45 บาท (ไม่เข้าโปร 3 แก้ว), อื่นๆ 35 บาท โปร 3 แก้ว 100 บาท
+      let normalCups = [], matchaCups = [];
+      active.forEach(([name,d])=>{
+        d.variants.forEach(v=>{
+          if(DRINKS_45.includes(name)){
+            for(let q=0;q<v.qty;q++) matchaCups.push(45);
+          } else {
+            for(let q=0;q<v.qty;q++) normalCups.push(35);
+          }
+        });
+      });
+      let drinkCost = 0;
+      // โปร 3 แก้ว เฉพาะเมนูปกติ
+      for(let i=0;i<normalCups.length;i+=3){
+        drinkCost += normalCups.slice(i,i+3).length===3 ? 100 : normalCups.slice(i,i+3).reduce((s,p)=>s+p,0);
+      }
+      // มัทฉะคิดราคาปกติ 45 ต่อแก้ว
+      drinkCost += matchaCups.reduce((s,p)=>s+p,0);
+      const normalQty = normalCups.length;
+      const matchaQty  = matchaCups.length;
+      if(normalQty>0) lines.push({ text:`รวมน้ำ ${normalQty} แก้ว${normalQty>=3?' (โปร 3 แก้ว 100 ฿)':''}`, price: (() => { let c=0; for(let i=0;i<normalCups.length;i+=3){ c+=normalCups.slice(i,i+3).length===3?100:normalCups.slice(i,i+3).reduce((s,p)=>s+p,0); } return c; })() });
+      if(matchaQty>0)  lines.push({ text:`รวมมัทฉะ ${matchaQty} แก้ว (45 ฿/แก้ว)`, price: matchaCups.reduce((s,p)=>s+p,0) });
       total += drinkCost;
       if(buugCount>0){
         lines.push({ text:`บุก ${buugCount} แก้ว`, price: buugCount*15 });
@@ -922,7 +951,22 @@ function buildOrderText(){
           parts.push(`${n}${qTxt} (${sw}${v.buug?'+บุก':''})`);
         });
       });
-      total += Math.floor(totalQty/3)*100+(totalQty%3)*35;
+      let normalCups2=[], matchaCups2=[];
+      active.forEach(([name,d])=>{
+        d.variants.forEach(v=>{
+          if(DRINKS_45.includes(name)){
+            for(let q=0;q<v.qty;q++) matchaCups2.push(45);
+          } else {
+            for(let q=0;q<v.qty;q++) normalCups2.push(35);
+          }
+        });
+      });
+      let drinkTotal=0;
+      for(let i=0;i<normalCups2.length;i+=3){
+        drinkTotal += normalCups2.slice(i,i+3).length===3 ? 100 : normalCups2.slice(i,i+3).reduce((s,p)=>s+p,0);
+      }
+      drinkTotal += matchaCups2.reduce((s,p)=>s+p,0);
+      total += drinkTotal;
       total += buugCount*15;
     }
   }
