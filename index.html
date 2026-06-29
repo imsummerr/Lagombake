@@ -518,7 +518,7 @@ const state = {
 function eid(s){ return s.replace(/[^a-zA-Zก-๙0-9]/g,'_'); }
 function newPiece(){ return { sauce: null, fillings: new Set(), veg: null }; }
 function newVariant()     { return { sweet: null, buug: false, qty: 1 }; }
-function newFoodVariant(){ return { sauce: null, fillings: new Set(), veg: null, qty: 1 }; }
+function newFoodVariant(){ return { sauce: null, fillings: new Set(), veg: null, extraFillings: new Set(), qty: 1 }; }
 function newSweetVariant(){ return { toppings: new Set(), qty: 1 }; }
 
 /* ═══════════════════════════════════════════════════
@@ -698,6 +698,13 @@ function toggleFoodFill(type, name, idx, val){
   updateSummary();
 }
 
+function toggleFoodExtraFill(type, name, idx, val){
+  const extras = state[type][name].variants[idx].extraFillings;
+  extras.has(val) ? extras.delete(val) : extras.add(val);
+  rerenderFoodPanel(type, name);
+  updateSummary();
+}
+
 function rerenderFoodPanel(type, name){
   const d   = state[type][name];
   const lbl = FOOD_LABEL[type];
@@ -734,6 +741,13 @@ function rerenderFoodPanel(type, name){
               ><span class="chip-dot"></span>${f2}</span>`).join('')}
           </div>
           <p class="fill-hint">${v.fillings.size>0?'เลือกแล้ว '+v.fillings.size+'/2':''}</p>
+          <div class="cup-sweet-row-label" style="margin-top:12px;">เพิ่มไส้ <span style="font-weight:400;text-transform:none;color:var(--muted);">(+10 ฿/อย่าง • ไม่จำกัด)</span></div>
+          <div class="chip-grid" style="margin-bottom:4px;">
+            ${FILLINGS.map(f3=>`
+              <span class="chip ${v.extraFillings.has(f3)?'selected':''}"
+                onclick="toggleFoodExtraFill('${type}','${name}',${i},'${f3}')"
+              ><span class="chip-dot"></span>${f3}</span>`).join('')}
+          </div>
           <div class="cup-sweet-row-label" style="margin-top:8px;">ผัก</div>
           <div class="chip-grid">
             ${VEGGIES.map(veg=>`
@@ -900,9 +914,12 @@ function updateSummary(){
     Object.entries(state.sandwich).forEach(([name,d])=>{
       d.variants.forEach(v=>{
         const parts = [v.sauce,...[...v.fillings],v.veg].filter(Boolean);
+        const extraCost = v.extraFillings.size * 10;
+        const extraTxt = v.extraFillings.size>0 ? ` + เพิ่มไส้: ${[...v.extraFillings].join(', ')}` : '';
         const qTxt = v.qty>1?` x${v.qty}`:'';
-        lines.push({ text:`${name}${qTxt} (${parts.join(', ')||'ยังไม่ได้เลือก'})`, price:39*v.qty });
-        total += 39*v.qty;
+        const unitPrice = 39 + extraCost;
+        lines.push({ text:`${name}${qTxt} (${parts.join(', ')||'ยังไม่ได้เลือก'})${extraTxt}`, price:unitPrice*v.qty });
+        total += unitPrice*v.qty;
       });
     });
   }
@@ -912,9 +929,12 @@ function updateSummary(){
     Object.entries(state.toast).forEach(([name,d])=>{
       d.variants.forEach(v=>{
         const parts = [v.sauce,...[...v.fillings],v.veg].filter(Boolean);
+        const extraCost = v.extraFillings.size * 10;
+        const extraTxt = v.extraFillings.size>0 ? ` + เพิ่มไส้: ${[...v.extraFillings].join(', ')}` : '';
         const qTxt = v.qty>1?` x${v.qty}`:'';
-        lines.push({ text:`${name}${qTxt} (${parts.join(', ')||'ยังไม่ได้เลือก'})`, price:35*v.qty });
-        total += 35*v.qty;
+        const unitPrice = 35 + extraCost;
+        lines.push({ text:`${name}${qTxt} (${parts.join(', ')||'ยังไม่ได้เลือก'})${extraTxt}`, price:unitPrice*v.qty });
+        total += unitPrice*v.qty;
       });
     });
   }
@@ -1075,9 +1095,10 @@ function buildOrderText(){
     Object.entries(state.sandwich).forEach(([name,d])=>{
       d.variants.forEach(v=>{
         const desc = [v.sauce,...[...v.fillings],v.veg].filter(Boolean).join(',') || '-';
+        const extraDesc = v.extraFillings.size>0 ? ` +เพิ่มไส้:${[...v.extraFillings].join(',')}` : '';
         const qTxt = v.qty>1?` x${v.qty}`:'';
-        parts.push(`${name}${qTxt} [${desc}]`);
-        total += 39*v.qty;
+        parts.push(`${name}${qTxt} [${desc}${extraDesc}]`);
+        total += (39 + v.extraFillings.size*10)*v.qty;
       });
     });
   }
@@ -1086,9 +1107,10 @@ function buildOrderText(){
     Object.entries(state.toast).forEach(([name,d])=>{
       d.variants.forEach(v=>{
         const desc = [v.sauce,...[...v.fillings],v.veg].filter(Boolean).join(',') || '-';
+        const extraDesc = v.extraFillings.size>0 ? ` +เพิ่มไส้:${[...v.extraFillings].join(',')}` : '';
         const qTxt = v.qty>1?` x${v.qty}`:'';
-        parts.push(`${name}${qTxt} [${desc}]`);
-        total += 35*v.qty;
+        parts.push(`${name}${qTxt} [${desc}${extraDesc}]`);
+        total += (35 + v.extraFillings.size*10)*v.qty;
       });
     });
   }
