@@ -3,17 +3,18 @@ const { google }   = require('googleapis');
 
 const SHEET_NAME = 'Orders';
 
-// ── รันทุกวัน 21:00 เวลาไทย (14:00 UTC) ─────────────────────────
-exports.handler = schedule('0 14 * * *', async () => {
+// ── รันทุกวัน 01:01 เวลาไทย (18:01 UTC วันก่อน) ─────────────────
+// ตัดยอดออเดอร์ถึง 23:59 ของวันก่อน แล้วส่งสรุปตี 1 นาที 1
+exports.handler = schedule('1 18 * * *', async () => {
   try {
     const auth = new google.auth.GoogleAuth({
       credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     });
 
-    const rows      = await getTodayRows(auth);
+    const rows      = await getYesterdayRows(auth);
     const summary   = buildSummary(rows);
-    const dateLabel = getTodayLabel();
+    const dateLabel = getYesterdayLabel();
 
     await sendLineSummary(summary, dateLabel, rows.length);
     console.log('summary sent:', dateLabel, 'orders:', rows.length);
@@ -23,7 +24,7 @@ exports.handler = schedule('0 14 * * *', async () => {
 });
 
 // ── ดึงแถวของวันนี้จาก Sheet ─────────────────────────────────────
-async function getTodayRows(auth) {
+async function getYesterdayRows(auth) {
   const sheets = google.sheets({ version: 'v4', auth });
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.GOOGLE_SHEET_ID,
@@ -31,11 +32,11 @@ async function getTodayRows(auth) {
   });
 
   const rows = res.data.values || [];
-  const todayStr = getTodayDateStr();   // "dd/MM/yyyy"
+  const dateStr = getYesterdayDateStr();  // "dd/MM/yyyy" ของเมื่อวาน
 
   return rows.filter(row => {
     const dateCell = row[0] || '';
-    return dateCell.startsWith(todayStr);
+    return dateCell.startsWith(dateStr);
   });
 }
 
@@ -121,18 +122,23 @@ async function pushLine(token, targetId, text) {
 }
 
 // ── helpers ──────────────────────────────────────────────────────
-function getTodayDateStr() {
-  // คืน "dd/MM/yyyy" เวลาไทย (รูปแบบเดียวกับที่บันทึกลง Sheet)
-  const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yyyy = d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
+// ฟังก์ชันรันตี 1:01 ของวันถัดไป → ต้องสรุปออเดอร์ "เมื่อวาน" (เวลาไทย)
+function getThaiYesterday() {
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+  now.setDate(now.getDate() - 1);
+  return now;
 }
 
-function getTodayLabel() {
-  return new Date().toLocaleDateString('th-TH', {
-    timeZone: 'Asia/Bangkok',
+function getYesterdayDateStr() {
+  // คืน "dd/MM/yyyy" ของเมื่อวาน เวลาไทย
+  const d  = getThaiYesterday();
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}/${d.getFullYear()}`;
+}
+
+function getYesterdayLabel() {
+  return getThaiYesterday().toLocaleDateString('th-TH', {
     day: 'numeric', month: 'long', year: 'numeric',
   });
 }
