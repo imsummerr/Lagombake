@@ -62,9 +62,10 @@ function saveSlipToDrive(base64Data, customerName) {
     const file = folder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
+    const fileId = file.getId();
     return {
       viewUrl  : file.getUrl(),
-      directUrl: 'https://drive.google.com/uc?export=view&id=' + file.getId()
+      directUrl: 'https://lh3.googleusercontent.com/d/' + fileId
     };
   } catch (err) {
     Logger.log('saveSlipToDrive error: ' + err);
