@@ -972,7 +972,9 @@ function updateSummary(){
 /* ═══════════════════════════════════════════════════
    SLIP UPLOAD
 ═══════════════════════════════════════════════════ */
+const IMGBB_KEY = 'b86e907815c1ff61d51a30b53375dd59';
 let slipBase64 = null;
+let slipUrl = null;
 
 function handleSlip(e){
   const file = e.target.files[0];
@@ -981,11 +983,17 @@ function handleSlip(e){
     showToast('กรุณาเลือกไฟล์รูปภาพเท่านั้น', true);
     return;
   }
+  slipUrl = null;
+  const box = document.getElementById('slip-box');
+  box.classList.remove('has-img');
+  document.getElementById('slip-preview').style.display = 'none';
+  document.getElementById('slip-placeholder').style.display = 'block';
+  document.getElementById('slip-placeholder').querySelector('div:last-child').textContent = 'กำลังอัพโหลด...';
+
   const reader = new FileReader();
   reader.onload = (ev) => {
     const img = new Image();
     img.onload = () => {
-      // compress ก่อนส่ง — resize สูงสุด 1200px, quality 75%
       const MAX = 1200;
       let w = img.width, h = img.height;
       if(w > MAX){ h = Math.round(h * MAX / w); w = MAX; }
@@ -994,14 +1002,43 @@ function handleSlip(e){
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       slipBase64 = canvas.toDataURL('image/jpeg', 0.75);
+
+      // show preview immediately
       const preview = document.getElementById('slip-preview');
       const placeholder = document.getElementById('slip-placeholder');
-      const box = document.getElementById('slip-box');
       preview.src = slipBase64;
       preview.style.display = 'block';
       placeholder.style.display = 'none';
       box.classList.add('has-img');
       document.getElementById('slip-error').classList.remove('show');
+
+      // upload to ImgBB (supports CORS — no no-cors needed)
+      const b64only = slipBase64.split(',')[1];
+      const fd = new FormData();
+      fd.append('image', b64only);
+      fetch('https://api.imgbb.com/1/upload?key=' + IMGBB_KEY, { method:'POST', body: fd })
+        .then(r => r.json())
+        .then(j => {
+          if(j && j.data && j.data.url){
+            slipUrl = j.data.url;
+          } else {
+            showToast('อัพโหลดสลิปล้มเหลว กรุณาลองใหม่', true);
+            slipBase64 = null;
+            box.classList.remove('has-img');
+            preview.style.display = 'none';
+            placeholder.style.display = 'block';
+            placeholder.querySelector('div:last-child').textContent = 'กดเพื่ออัพโหลดรูปสลิป';
+          }
+        })
+        .catch(() => {
+          showToast('อัพโหลดสลิปล้มเหลว กรุณาลองใหม่', true);
+          slipBase64 = null;
+          slipUrl = null;
+          box.classList.remove('has-img');
+          preview.style.display = 'none';
+          placeholder.style.display = 'block';
+          placeholder.querySelector('div:last-child').textContent = 'กดเพื่ออัพโหลดรูปสลิป';
+        });
     };
     img.src = ev.target.result;
   };
@@ -1067,6 +1104,11 @@ async function submitOrder(){
     showToast('กรุณาแนบสลิปการโอนเงิน', true);
     return;
   }
+  if(!slipUrl){
+    document.getElementById('slip-box').scrollIntoView({ behavior:'smooth', block:'center' });
+    showToast('กำลังอัพโหลดสลิป กรุณารอสักครู่...', true);
+    return;
+  }
   document.getElementById('slip-error').classList.remove('show');
 
   const btn = document.getElementById('btn-save');
@@ -1081,7 +1123,7 @@ async function submitOrder(){
         items: built.text,
         totalPrice: built.total,
         remark: document.getElementById('remark').value.trim(),
-        slip: slipBase64
+        slipUrl: slipUrl
       })
     });
     showToast('✓ บันทึกออเดอร์เรียบร้อยแล้ว');
@@ -1201,6 +1243,7 @@ function resetForm(){
   document.querySelectorAll('.cat-check').forEach(el=>el.classList.remove('checked'));
   // reset slip
   slipBase64 = null;
+  slipUrl = null;
   document.getElementById('slip-preview').style.display = 'none';
   document.getElementById('slip-preview').src = '';
   document.getElementById('slip-placeholder').style.display = 'block';
