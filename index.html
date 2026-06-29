@@ -700,7 +700,12 @@ function toggleFoodFill(type, name, idx, val){
 
 function toggleFoodExtraFill(type, name, idx, val){
   const extras = state[type][name].variants[idx].extraFillings;
-  extras.has(val) ? extras.delete(val) : extras.add(val);
+  if(extras.has(val)){
+    extras.delete(val);
+  } else {
+    if(extras.size >= 2){ showToast('เพิ่มไส้ได้สูงสุด 2 อย่าง', true); return; }
+    extras.add(val);
+  }
   rerenderFoodPanel(type, name);
   updateSummary();
 }
@@ -713,7 +718,8 @@ function rerenderFoodPanel(type, name){
   if(d.variants.length === 0){ el.innerHTML = ''; return; }
 
   el.innerHTML = d.variants.map((v, i) => {
-    const fillDis = (f2) => !v.fillings.has(f2) && v.fillings.size >= 2;
+    const fillDis  = (f2) => !v.fillings.has(f2) && v.fillings.size >= 2;
+    const extraDis = (f3) => !v.extraFillings.has(f3) && v.extraFillings.size >= 2;
     return `
       <div class="variant-block">
         <div class="variant-header">
@@ -726,29 +732,29 @@ function rerenderFoodPanel(type, name){
           </div>
         </div>
         <div class="variant-body">
-          <div class="cup-sweet-row-label">ซอส</div>
+          <div class="cup-sweet-row-label">ซอส <span style="color:#c0392b;">*</span></div>
           <div class="chip-grid" style="margin-bottom:8px;">
             ${SAUCES.map(s=>`
               <span class="chip ${v.sauce===s?'selected':''}"
                 onclick="selectFoodOption('${type}','${name}',${i},'sauce','${s}')"
               ><span class="chip-dot"></span>${s}</span>`).join('')}
           </div>
-          <div class="cup-sweet-row-label">ไส้ <span style="font-weight:400;text-transform:none;">(สูงสุด 2 อย่าง)</span></div>
+          <div class="cup-sweet-row-label">ไส้ <span style="color:#c0392b;">*</span> <span style="font-weight:400;text-transform:none;">(อย่างน้อย 1 • สูงสุด 2)</span></div>
           <div class="chip-grid" style="margin-bottom:4px;">
             ${FILLINGS.map(f2=>`
               <span class="chip ${v.fillings.has(f2)?'selected':''} ${fillDis(f2)?'disabled':''}"
                 onclick="toggleFoodFill('${type}','${name}',${i},'${f2}')"
               ><span class="chip-dot"></span>${f2}</span>`).join('')}
           </div>
-          <p class="fill-hint">${v.fillings.size>0?'เลือกแล้ว '+v.fillings.size+'/2':''}</p>
-          <div class="cup-sweet-row-label" style="margin-top:12px;">เพิ่มไส้ <span style="font-weight:400;text-transform:none;color:var(--muted);">(+10 ฿/อย่าง • ไม่จำกัด)</span></div>
+          <p class="fill-hint">${v.fillings.size>0?'เลือกแล้ว '+v.fillings.size+'/2':'⚠ กรุณาเลือกอย่างน้อย 1 ไส้'}</p>
+          <div class="cup-sweet-row-label" style="margin-top:12px;">เพิ่มไส้ <span style="font-weight:400;text-transform:none;color:var(--muted);">(+10 ฿/อย่าง • สูงสุด 2 • ไม่บังคับ)</span></div>
           <div class="chip-grid" style="margin-bottom:4px;">
             ${FILLINGS.map(f3=>`
-              <span class="chip ${v.extraFillings.has(f3)?'selected':''}"
+              <span class="chip ${v.extraFillings.has(f3)?'selected':''} ${extraDis(f3)?'disabled':''}"
                 onclick="toggleFoodExtraFill('${type}','${name}',${i},'${f3}')"
               ><span class="chip-dot"></span>${f3}</span>`).join('')}
           </div>
-          <div class="cup-sweet-row-label" style="margin-top:8px;">ผัก</div>
+          <div class="cup-sweet-row-label" style="margin-top:8px;">ผัก <span style="color:#c0392b;">*</span></div>
           <div class="chip-grid">
             ${VEGGIES.map(veg=>`
               <span class="chip ${v.veg===veg?'selected':''}"
@@ -1018,6 +1024,26 @@ async function submitOrder(){
     });
     if(missing.length){
       showToast('กรุณาเลือกความหวาน: ' + missing.join(', '), true);
+      return;
+    }
+  }
+
+  // validate sandwich / toast options
+  {
+    const missing = [];
+    ['sandwich','toast'].forEach(type=>{
+      if(!state.openCats.has(type)) return;
+      Object.entries(state[type]).forEach(([name,d])=>{
+        d.variants.forEach((v,vi)=>{
+          const tag = `${name}${d.variants.length>1?' #'+(vi+1):''}`;
+          if(!v.sauce)           missing.push(tag + ' (ซอส)');
+          if(v.fillings.size===0) missing.push(tag + ' (ไส้)');
+          if(!v.veg)             missing.push(tag + ' (ผัก)');
+        });
+      });
+    });
+    if(missing.length){
+      showToast('กรุณาเลือก: ' + missing.join(', '), true);
       return;
     }
   }
