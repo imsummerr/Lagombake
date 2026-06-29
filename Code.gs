@@ -1,12 +1,12 @@
 // ══════════════════════════════════════════════════════════════════
-//  Lagombake — Google Apps Script  v5
+//  Lagombake — Google Apps Script  v6
 // ══════════════════════════════════════════════════════════════════
 
 const SHEET_NAME         = 'Orders';
 const LINE_CHANNEL_TOKEN = '';   // ← ใส่ Channel Access Token
 const LINE_TARGET_ID     = '';   // ← ใส่ User ID หรือ Group ID
 
-// ── รับ POST ─────────────────────────────────────────────────────
+// ── รับ POST (ออเดอร์จากเว็บ) ────────────────────────────────────
 function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
@@ -28,7 +28,13 @@ function doPost(e) {
   }
 }
 
-function doGet() {
+// ── รับ GET ──────────────────────────────────────────────────────
+// ?action=summary  → ส่งสรุปยอดเมื่อวาน (เรียกจาก Netlify ตี 1:01)
+function doGet(e) {
+  if (e && e.parameter && e.parameter.action === 'summary') {
+    sendDailySummary();
+    return jsonResponse({ status: 'ok' });
+  }
   return ContentService
     .createTextOutput('✓ Lagombake Script is running')
     .setMimeType(ContentService.MimeType.TEXT);
@@ -185,6 +191,81 @@ function handleLineWebhook(events) {
       }),
       muteHttpExceptions: true
     });
+  });
+}
+
+// ── สรุปยอดประจำวัน ──────────────────────────────────────────────
+function sendDailySummary() {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) return;
+
+  // หาวันเมื่อวาน (เวลาไทย) ในรูปแบบ "dd/MM/yyyy"
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const dateStr = Utilities.formatDate(yesterday, 'Asia/Bangkok', 'dd/MM/yyyy');
+  const dateLabel = Utilities.formatDate(yesterday, 'Asia/Bangkok', 'dd MMMM yyyy');
+
+  // ดึงแถวของเมื่อวาน (คอลัมน์ A เริ่มด้วย dateStr)
+  const data = sheet.getDataRange().getValues();
+  const rows = data.slice(1).filter(row => String(row[0]).startsWith(dateStr));
+
+  // รวมยอดแต่ละเมนู
+  const counts = {};
+  rows.forEach(row => {
+    const itemsStr = String(row[2] || '');
+    itemsStr.split(' | ').forEach(seg => {
+      seg = seg.trim();
+      if (!seg) return;
+      const qMatch = seg.match(/ x(\d+)/);
+      const qty = qMatch ? parseInt(qMatch[1]) : 1;
+      const key = seg.replace(/ x\d+/, '').trim();
+      counts[key] = (counts[key] || 0) + qty;
+    });
+  });
+
+  // จัดกลุ่ม
+  const SWEET_KEYWORDS = ['ปังปิ้งโอริโอ้','ปังปิ้งช็อก','ปังปิ้งเนย','ปังปิ้งนูเทลล่า',
+                          'ปังปิ้งน้ำผึ้ง','ปังปิ้งน้ำตาล','ปังปิ้งกระเทียม','ปังปิ้งกล้วย',
+                          'ปังปิ้งอโวคาโด้','ปังปิ้งโกโก้'];
+  const FOOD_KEYWORDS  = ['แซนด์วิช','ปังปิ้ง'];
+
+  const drinks = [], foods = [], sweets = [];
+  Object.entries(counts).forEach(([key, qty]) => {
+    const isSweet = SWEET_KEYWORDS.some(k => key.startsWith(k));
+    const isFood  = !isSweet && FOOD_KEYWORDS.some(k => key.startsWith(k));
+    const unit    = isFood || isSweet ? 'ชิ้น' : 'แก้ว';
+    const line    = '  • ' + key + '  →  ' + qty + ' ' + unit;
+    if (isSweet)    sweets.push(line);
+    else if (isFood) foods.push(line);
+    else            drinks.push(line);
+  });
+
+  // สร้างข้อความ
+  let body = '';
+  if (drinks.length) body += '☕ เครื่องดื่ม\n' + drinks.join('\n') + '\n';
+  if (foods.length)  body += '\n🥪 แซนด์วิช / ปังปิ้ง\n' + foods.join('\n') + '\n';
+  if (sweets.length) body += '\n🍞 ของหวานปังปิ้ง\n' + sweets.join('\n') + '\n';
+
+  const totalQty = Object.values(counts).reduce((s, n) => s + n, 0);
+
+  const msg = Object.keys(counts).length === 0
+    ? '📋 สรุปออเดอร์ ' + dateLabel + '\n━━━━━━━━━━━━━━━━━━\nไม่มีออเดอร์วันนี้'
+    : '━━━━━━━━━━━━━━━━━━\n' +
+      '📊 สรุปออเดอร์ประจำวัน\n' +
+      '📅 ' + dateLabel + '\n' +
+      '━━━━━━━━━━━━━━━━━━\n' +
+      body +
+      '━━━━━━━━━━━━━━━━━━\n' +
+      '📦 ออเดอร์ : ' + rows.length + ' รายการ\n' +
+      '🔢 รวมทั้งหมด : ' + totalQty + ' ชิ้น/แก้ว';
+
+  if (!LINE_CHANNEL_TOKEN || !LINE_TARGET_ID) return;
+  UrlFetchApp.fetch('https://api.line.me/v2/bot/message/push', {
+    method  : 'post',
+    headers : { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + LINE_CHANNEL_TOKEN },
+    payload : JSON.stringify({ to: LINE_TARGET_ID, messages: [{ type: 'text', text: msg }] }),
+    muteHttpExceptions: true
   });
 }
 
