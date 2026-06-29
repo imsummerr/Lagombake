@@ -469,7 +469,7 @@
 /* ═══════════════════════════════════════════════════
    CONFIG
 ═══════════════════════════════════════════════════ */
-const SCRIPT_URL = '/.netlify/functions/order';
+const SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec'; // ← ใส่ URL Apps Script
 
 const DRINKS = [
   'อเมริกาโน่','เอสเพรสโซ่','คาปูชิโน่','ลาเต้','มอคค่า',
@@ -1061,8 +1061,8 @@ async function submitOrder(){
   btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
 
   try {
-    const res = await fetch(SCRIPT_URL, {
-      method:'POST',
+    await fetch(SCRIPT_URL, {
+      method:'POST', mode:'no-cors',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         customerName: name,
@@ -1072,7 +1072,6 @@ async function submitOrder(){
         slip: slipBase64
       })
     });
-    if (!res.ok) throw new Error('server error');
     showToast('✓ บันทึกออเดอร์เรียบร้อยแล้ว');
     setTimeout(resetForm, 2200);
   } catch {

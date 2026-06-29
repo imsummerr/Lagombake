@@ -269,6 +269,13 @@ function sendDailySummary() {
   });
 }
 
+// ── Time Trigger: ตี 1:01 ทุกวัน ────────────────────────────────
+// ตั้ง Trigger: Triggers → + Add Trigger → runDailySummary
+//   → Time-driven → Day timer → 1am to 2am
+function runDailySummary() {
+  sendDailySummary();
+}
+
 // ── ทดสอบ LINE ───────────────────────────────────────────────────
 function testSendLine() {
   sendLineMessage({
