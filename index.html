@@ -203,6 +203,15 @@
   .variant-body { padding: 10px 12px; }
   .cup-sweet-row-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
 
+  .sweet-required {
+    font-size: 11px;
+    color: #c0392b;
+    margin-top: 4px;
+    display: none;
+  }
+  .sweet-required.show { display: block; }
+  .sweet-chip.error-border { border-color: #c0392b !important; }
+
   .add-more-btn {
     width: 100%; padding: 9px; border: 1.5px dashed var(--border);
     border-radius: 8px; background: none; cursor: pointer;
@@ -564,7 +573,7 @@ function rerenderDrinkPanel(name){
     const label = d.variants.length > 1 ? `แก้วที่ ${i+1}` : '';
     const sweetHTML = isNoSweet
       ? `<p class="sweet-note">🍹 น้ำลำไยเป็นสูตรหวานน้อย</p>`
-      : `<div class="cup-sweet-row-label">${label ? label + ' — ' : ''}ความหวาน</div>
+      : `<div class="cup-sweet-row-label">${label ? label + ' — ' : ''}ความหวาน <span style="color:#c0392b;">*</span></div>
          <div class="sweet-chips">
            ${SWEETNESS.map(s => `
              <span class="sweet-chip ${v.sweet===s?'selected':''}"
@@ -911,6 +920,23 @@ async function submitOrder(){
 
   const built = buildOrderText();
   if(!built.text){ showToast('กรุณาเลือกอย่างน้อย 1 เมนู', true); return; }
+
+  // validate ความหวานเมนูน้ำ (ยกเว้น น้ำลำไย)
+  if(state.openCats.has('drink')){
+    const missing = [];
+    Object.entries(state.drinks).forEach(([name,d])=>{
+      if(name === NO_SWEET) return;
+      d.variants.forEach((v,i)=>{
+        if(!v.sweet){
+          missing.push(`${name}${d.variants.length>1?' #'+(i+1):''}`);
+        }
+      });
+    });
+    if(missing.length){
+      showToast('กรุณาเลือกความหวาน: ' + missing.join(', '), true);
+      return;
+    }
+  }
 
   const btn = document.getElementById('btn-save');
   btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
