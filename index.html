@@ -371,7 +371,43 @@
     </div>
   </div>
 
-  <!-- 2. แซนด์วิช -->
+  <!-- 2. สลัดโรล -->
+  <div class="card">
+    <button class="cat-toggle" onclick="toggleCat('saladroll')">
+      <div class="cat-left">
+        <div class="cat-check" id="check-saladroll"></div>
+        <span>สลัดโรล</span>
+        <span class="cat-price">29 ฿</span>
+      </div>
+      <span class="cat-arrow" id="arrow-saladroll">▼</span>
+    </button>
+    <div class="cat-body" id="body-saladroll">
+      <p style="font-size:12px;color:var(--muted);margin-top:12px;margin-bottom:2px;">
+        กด + เพื่อเพิ่มจำนวน กำหนดไส้ได้แต่ละชิ้น (สูงสุด 1 ไส้)
+      </p>
+      <div id="saladroll-list"></div>
+    </div>
+  </div>
+
+  <!-- 3. มาม่าโรล -->
+  <div class="card">
+    <button class="cat-toggle" onclick="toggleCat('mamaroll')">
+      <div class="cat-left">
+        <div class="cat-check" id="check-mamaroll"></div>
+        <span>มาม่าโรล</span>
+        <span class="cat-price">29 ฿</span>
+      </div>
+      <span class="cat-arrow" id="arrow-mamaroll">▼</span>
+    </button>
+    <div class="cat-body" id="body-mamaroll">
+      <p style="font-size:12px;color:var(--muted);margin-top:12px;margin-bottom:2px;">
+        กด + เพื่อเพิ่มจำนวน กำหนดไส้ได้แต่ละชิ้น (สูงสุด 1 ไส้)
+      </p>
+      <div id="mamaroll-list"></div>
+    </div>
+  </div>
+
+  <!-- 4. แซนด์วิช -->
   <div class="card">
     <button class="cat-toggle" onclick="toggleCat('sandwich')">
       <div class="cat-left">
@@ -483,9 +519,10 @@ const DRINKS_45 = ['เพียวมัทฉะ','มัทฉะลาเต
 const NO_SWEET   = 'น้ำลำไย';
 const SWEETNESS  = ['มาก','ปกติ','น้อย','ไม่หวาน'];
 
-const SAUCES  = ['ซอสพิซซ่า','มายองเนส','ไม่ใส่ซอส'];
-const FILLINGS = ['ไข่ข้น','ไข่เจียว','ไข่ดาว','ไข่ต้ม','ไส้กรอก','แฮม','ทูน่า','ปูอัด','กล้วย','อโวคาโด้'];
-const VEGGIES  = ['ใส่ผัก','ไม่ใส่ผัก'];
+const SAUCES         = ['ซอสพิซซ่า','มายองเนส','ไม่ใส่ซอส'];
+const SALADROLL_SAUCES = ['น้ำจิ้ม','งา','ครีมซีฟู้ด'];
+const FILLINGS       = ['ไข่ข้น','ไข่เจียว','ไข่ดาว','ไข่ต้ม','ไส้กรอก','แฮม','ทูน่า','ปูอัด','กล้วย','อโวคาโด้'];
+const VEGGIES        = ['ใส่ผัก','ไม่ใส่ผัก'];
 
 const SWEET_TOASTS = [
   'ปังปิ้งโอริโอ้','ปังปิ้งช็อก','ปังปิ้งเนยนม','ปังปิ้งเนยล้วน',
@@ -496,8 +533,10 @@ const SWEET_TOASTS = [
 const TOPPINGS = ['โอริโอ้','กล้วย','อโวคาโด้','ซอสช็อกโกแลต','นูเทลล่า','น้ำผึ้ง','นม','น้ำตาล','คาราเมล','โกโก้'];
 
 // เมนูแซนด์วิชและปังปิ้ง (แต่ละรายการเลือก option แยกกันได้)
-const SANDWICH_ITEMS = ['แซนด์วิช'];
-const TOAST_ITEMS    = ['ปังปิ้ง'];
+const SANDWICH_ITEMS   = ['แซนด์วิช'];
+const TOAST_ITEMS      = ['ปังปิ้ง'];
+const SALADROLL_ITEMS  = ['สลัดโรล'];
+const MAMAROLL_ITEMS   = ['มาม่าโรล'];
 
 /* ═══════════════════════════════════════════════════
    STATE
@@ -507,10 +546,12 @@ const TOAST_ITEMS    = ['ปังปิ้ง'];
    sweets[name]  = { qty, sameTop, pieces:[Set] }
 ═══════════════════════════════════════════════════ */
 const state = {
-  openCats: new Set(),
-  drinks:   {},
-  sandwich: {},   // sandwich[name].variants = [{sauce,fillings,veg,qty}]
-  toast:    {},   // toast[name].variants    = [{sauce,fillings,veg,qty}]
+  openCats:  new Set(),
+  drinks:    {},
+  sandwich:  {},   // sandwich[name].variants = [{sauce,fillings,veg,qty}]
+  toast:     {},   // toast[name].variants    = [{sauce,fillings,veg,qty}]
+  saladroll: {},   // saladroll[name].variants = [{sauce,fillings,extraFillings,qty}]
+  mamaroll:  {},   // mamaroll[name].variants  = [{fillings,extraFillings,qty}]
   sweets:   {},   // sweets[name].variants   = [{toppings:Set,qty}]
 };
 
@@ -532,10 +573,14 @@ function init(){
     const LIST = type === 'sandwich' ? SANDWICH_ITEMS : TOAST_ITEMS;
     LIST.forEach(name => { state[type][name] = { variants:[] }; });
   });
+  SALADROLL_ITEMS.forEach(name => { state.saladroll[name] = { variants:[] }; });
+  MAMAROLL_ITEMS.forEach(name  => { state.mamaroll[name]  = { variants:[] }; });
   // sweets
   SWEET_TOASTS.forEach(n => { state.sweets[n] = { variants:[] }; });
 
   renderDrinkList();
+  renderRollList('saladroll');
+  renderRollList('mamaroll');
   renderFoodList('sandwich');
   renderFoodList('toast');
   renderSweetList();
@@ -648,6 +693,131 @@ function rerenderDrinkPanel(name){
 ═══════════════════════════════════════════════════ */
 const FOOD_PRICE = { sandwich: 39, toast: 35 };
 const FOOD_LABEL = { sandwich: 'แซนด์วิช', toast: 'ปังปิ้ง' };
+
+/* ═══════════════════════════════════════════════════
+   สลัดโรล / มาม่าโรล — variant model
+   state[type][name].variants = [{sauce,fillings,extraFillings,qty}]
+   saladroll: sauce required, fillings max 1, no veg
+   mamaroll:  no sauce, fillings max 1, no veg
+═══════════════════════════════════════════════════ */
+const ROLL_CONFIG = {
+  saladroll: { sauces: SALADROLL_SAUCES, hasSauce: true,  label: 'สลัดโรล', price: 29 },
+  mamaroll:  { sauces: [],               hasSauce: false, label: 'มาม่าโรล', price: 29 },
+};
+const ROLL_ITEMS = { saladroll: SALADROLL_ITEMS, mamaroll: MAMAROLL_ITEMS };
+
+function renderRollList(type){
+  const el = document.getElementById(`${type}-list`);
+  el.innerHTML = ROLL_ITEMS[type].map(name => `
+    <div class="row-item">
+      <span class="row-name">${name}</span>
+      <button class="add-variant-btn" onclick="addRollVariant('${type}','${name}')">+ เลือก</button>
+    </div>
+    <div id="rpanel-${type}-${eid(name)}"></div>
+  `).join('');
+}
+
+function addRollVariant(type, name){
+  state[type][name].variants.push({ sauce: null, fillings: new Set(), extraFillings: new Set(), qty: 1 });
+  rerenderRollPanel(type, name);
+  updateSummary();
+}
+
+function removeRollVariant(type, name, idx){
+  state[type][name].variants.splice(idx, 1);
+  rerenderRollPanel(type, name);
+  updateSummary();
+}
+
+function changeRollVariantQty(type, name, idx, delta){
+  const v = state[type][name].variants[idx];
+  v.qty = Math.max(1, v.qty + delta);
+  rerenderRollPanel(type, name);
+  updateSummary();
+}
+
+function selectRollSauce(type, name, idx, val){
+  state[type][name].variants[idx].sauce = val;
+  rerenderRollPanel(type, name);
+  updateSummary();
+}
+
+function toggleRollFill(type, name, idx, val){
+  const fills = state[type][name].variants[idx].fillings;
+  if(fills.has(val)){
+    fills.delete(val);
+  } else {
+    if(fills.size >= 1){ showToast('เลือกไส้ได้สูงสุด 1 อย่าง', true); return; }
+    fills.add(val);
+  }
+  rerenderRollPanel(type, name);
+  updateSummary();
+}
+
+function toggleRollExtraFill(type, name, idx, val){
+  const extras = state[type][name].variants[idx].extraFillings;
+  if(extras.has(val)){
+    extras.delete(val);
+  } else {
+    if(extras.size >= 2){ showToast('เพิ่มไส้ได้สูงสุด 2 อย่าง', true); return; }
+    extras.add(val);
+  }
+  rerenderRollPanel(type, name);
+  updateSummary();
+}
+
+function rerenderRollPanel(type, name){
+  const cfg = ROLL_CONFIG[type];
+  const d   = state[type][name];
+  const el  = document.getElementById(`rpanel-${type}-${eid(name)}`);
+  if(!el) return;
+  if(d.variants.length === 0){ el.innerHTML = ''; return; }
+
+  el.innerHTML = d.variants.map((v, i) => {
+    const extraDis = (f) => !v.extraFillings.has(f) && v.extraFillings.size >= 2;
+    const sauceHTML = cfg.hasSauce ? `
+      <div class="cup-sweet-row-label">น้ำจิ้ม/ซอส <span style="color:#c0392b;">*</span></div>
+      <div class="chip-grid" style="margin-bottom:8px;">
+        ${cfg.sauces.map(s=>`
+          <span class="chip ${v.sauce===s?'selected':''}"
+            onclick="selectRollSauce('${type}','${name}',${i},'${s}')"
+          ><span class="chip-dot"></span>${s}</span>`).join('')}
+      </div>` : '';
+    return `
+      <div class="variant-block">
+        <div class="variant-header">
+          <span>${cfg.label} #${i+1}</span>
+          <div class="variant-qty">
+            <button class="qty-btn" onclick="changeRollVariantQty('${type}','${name}',${i},-1)">−</button>
+            <span>${v.qty}</span>
+            <button class="qty-btn" onclick="changeRollVariantQty('${type}','${name}',${i},1)">+</button>
+          </div>
+          <button class="remove-variant-btn" onclick="removeRollVariant('${type}','${name}',${i})">✕</button>
+        </div>
+        <div class="variant-body">
+          ${sauceHTML}
+          <div class="cup-sweet-row-label">ไส้ <span style="color:#c0392b;">*</span> <span style="font-weight:400;text-transform:none;">(อย่างน้อย 1 • สูงสุด 1)</span></div>
+          <div class="chip-grid" style="margin-bottom:4px;">
+            ${FILLINGS.map(f=>`
+              <span class="chip ${v.fillings.has(f)?'selected':''} ${!v.fillings.has(f)&&v.fillings.size>=1?'disabled':''}"
+                onclick="toggleRollFill('${type}','${name}',${i},'${f}')"
+              ><span class="chip-dot"></span>${f}</span>`).join('')}
+          </div>
+          <p class="fill-hint">${v.fillings.size>0?'เลือกแล้ว '+v.fillings.size+'/1':'⚠ กรุณาเลือกอย่างน้อย 1 ไส้'}</p>
+          <div class="cup-sweet-row-label" style="margin-top:12px;">เพิ่มไส้ <span style="font-weight:400;text-transform:none;color:var(--muted);">(+10 ฿/อย่าง • สูงสุด 2 • ไม่บังคับ)</span></div>
+          <div class="chip-grid" style="margin-bottom:4px;">
+            ${FILLINGS.map(f=>`
+              <span class="chip ${v.extraFillings.has(f)?'selected':''} ${extraDis(f)?'disabled':''}"
+                onclick="toggleRollExtraFill('${type}','${name}',${i},'${f}')"
+              ><span class="chip-dot"></span>${f}</span>`).join('')}
+          </div>
+        </div>
+      </div>`;
+  }).join('') + `
+    <button class="add-more-btn" onclick="addRollVariant('${type}','${name}')">
+      + เพิ่ม${name}แบบอื่น
+    </button>`;
+}
 
 function renderFoodList(type){
   const LIST = type === 'sandwich' ? SANDWICH_ITEMS : TOAST_ITEMS;
@@ -915,6 +1085,32 @@ function updateSummary(){
     }
   }
 
+  // ── สลัดโรล ──
+  if(state.openCats.has('saladroll')){
+    Object.entries(state.saladroll).forEach(([name,d])=>{
+      d.variants.forEach(v=>{
+        const desc = [v.sauce,...[...v.fillings]].filter(Boolean).join(',') || '-';
+        const extraDesc = v.extraFillings.size>0 ? ` +เพิ่มไส้:${[...v.extraFillings].join(',')}` : '';
+        const qTxt = v.qty>1?` x${v.qty}`:'';
+        parts.push(`${name}${qTxt} [${desc}${extraDesc}]`);
+        total += (29 + v.extraFillings.size*10)*v.qty;
+      });
+    });
+  }
+
+  // ── มาม่าโรล ──
+  if(state.openCats.has('mamaroll')){
+    Object.entries(state.mamaroll).forEach(([name,d])=>{
+      d.variants.forEach(v=>{
+        const desc = [...v.fillings].filter(Boolean).join(',') || '-';
+        const extraDesc = v.extraFillings.size>0 ? ` +เพิ่มไส้:${[...v.extraFillings].join(',')}` : '';
+        const qTxt = v.qty>1?` x${v.qty}`:'';
+        parts.push(`${name}${qTxt} [${desc}${extraDesc}]`);
+        total += (29 + v.extraFillings.size*10)*v.qty;
+      });
+    });
+  }
+
   // ── Sandwich ──
   if(state.openCats.has('sandwich')){
     Object.entries(state.sandwich).forEach(([name,d])=>{
@@ -1097,6 +1293,32 @@ async function submitOrder(){
     }
   }
 
+  // validate saladroll / mamaroll options
+  {
+    const missing = [];
+    if(state.openCats.has('saladroll')){
+      Object.entries(state.saladroll).forEach(([name,d])=>{
+        d.variants.forEach((v,vi)=>{
+          const tag = `${name}${d.variants.length>1?' #'+(vi+1):''}`;
+          if(!v.sauce)            missing.push(tag + ' (น้ำจิ้ม/ซอส)');
+          if(v.fillings.size===0) missing.push(tag + ' (ไส้)');
+        });
+      });
+    }
+    if(state.openCats.has('mamaroll')){
+      Object.entries(state.mamaroll).forEach(([name,d])=>{
+        d.variants.forEach((v,vi)=>{
+          const tag = `${name}${d.variants.length>1?' #'+(vi+1):''}`;
+          if(v.fillings.size===0) missing.push(tag + ' (ไส้)');
+        });
+      });
+    }
+    if(missing.length){
+      showToast('กรุณาเลือก: ' + missing.join(', '), true);
+      return;
+    }
+  }
+
   // validate slip
   if(!slipBase64){
     document.getElementById('slip-error').classList.add('show');
@@ -1171,6 +1393,30 @@ function buildOrderText(){
     }
   }
 
+  if(state.openCats.has('saladroll')){
+    Object.entries(state.saladroll).forEach(([name,d])=>{
+      d.variants.forEach(v=>{
+        const desc = [v.sauce,...[...v.fillings]].filter(Boolean).join(',') || '-';
+        const extraDesc = v.extraFillings.size>0 ? ` +เพิ่มไส้:${[...v.extraFillings].join(',')}` : '';
+        const qTxt = v.qty>1?` x${v.qty}`:'';
+        parts.push(`${name}${qTxt} [${desc}${extraDesc}]`);
+        total += (29 + v.extraFillings.size*10)*v.qty;
+      });
+    });
+  }
+
+  if(state.openCats.has('mamaroll')){
+    Object.entries(state.mamaroll).forEach(([name,d])=>{
+      d.variants.forEach(v=>{
+        const desc = [...v.fillings].filter(Boolean).join(',') || '-';
+        const extraDesc = v.extraFillings.size>0 ? ` +เพิ่มไส้:${[...v.extraFillings].join(',')}` : '';
+        const qTxt = v.qty>1?` x${v.qty}`:'';
+        parts.push(`${name}${qTxt} [${desc}${extraDesc}]`);
+        total += (29 + v.extraFillings.size*10)*v.qty;
+      });
+    });
+  }
+
   if(state.openCats.has('sandwich')){
     Object.entries(state.sandwich).forEach(([name,d])=>{
       d.variants.forEach(v=>{
@@ -1223,6 +1469,15 @@ function resetForm(){
     // reset the "+ เลือก" button visibility
     const btn=document.querySelector(`#drink-row-${eid(n)} .add-variant-btn`);
     // button is always shown, no state needed
+  });
+
+  SALADROLL_ITEMS.forEach(name=>{
+    state.saladroll[name] = { variants:[] };
+    const p=document.getElementById(`rpanel-saladroll-${eid(name)}`); if(p) p.innerHTML='';
+  });
+  MAMAROLL_ITEMS.forEach(name=>{
+    state.mamaroll[name] = { variants:[] };
+    const p=document.getElementById(`rpanel-mamaroll-${eid(name)}`); if(p) p.innerHTML='';
   });
 
   ['sandwich','toast'].forEach(type=>{
