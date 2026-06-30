@@ -188,12 +188,11 @@
     border: 1px solid var(--border);
   }
   .variant-header {
-    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    display: flex; align-items: center; justify-content: space-between;
     padding: 10px 12px; background: var(--sand);
   }
   .variant-title { font-size: 13.5px; font-weight: 600; color: var(--brown-dk); }
-  .variant-qty-ctrl { display: flex; align-items: center; gap: 6px; justify-content: center; }
-  .variant-header .variant-del { margin-left: auto; }
+  .variant-qty-ctrl { display: flex; align-items: center; gap: 6px; }
   .variant-del {
     width: 24px; height: 24px; border: none; background: none;
     cursor: pointer; font-size: 13px; color: var(--muted);
