@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<rect width="200" height="200" fill="#f7f3ee"/>
+<clipPath id="cup"><path d="M52 74 q0 -6 6 -6 h84 q6 0 6 6 l-8 78 q-1 10 -11 10 h-58 q-10 0 -11 -10 z"/></clipPath>
+<g clip-path="url(#cup)">
+  <rect x="40" y="64" width="120" height="100" fill="#f39c12"/>
+  <rect x="40" y="64" width="120" height="52" fill="#3a2417"/>
+</g>
+<path d="M52 74 q0 -6 6 -6 h84 q6 0 6 6 l-8 78 q-1 10 -11 10 h-58 q-10 0 -11 -10 z" fill="none" stroke="#2a1810" stroke-width="3"/>
+<circle cx="132" cy="60" r="14" fill="#f5a623" stroke="#d98b00" stroke-width="2"/><circle cx="132" cy="60" r="7" fill="#ffd27f"/>
+<path d="M64 96 q-3 26 2 56" stroke="#ffffff" stroke-opacity="0.22" stroke-width="6" fill="none" stroke-linecap="round"/>
+</svg>

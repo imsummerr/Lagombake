@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lagombake — สั่งอาหาร v8</title>
+<title>Lagombake — สั่งอาหาร v9</title>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Sarabun:wght@300;400;500;600&display=swap');
@@ -518,7 +518,8 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuKPOMRoQOdpPPxU2xkizxjtRgY-9N-ZsPn4c1CB1XcYvBexZtjByV28goRo_uAxXd/exec'; // ← ใส่ URL Apps Script
 
 const DRINKS = [
-  'อเมริกาโน่','เอสเพรสโซ่','คาปูชิโน่','ลาเต้','มอคค่า',
+  'อเมริกาโน่','อเมริกาโน่ส้ม','อเมริกาโน่น้ำผึ้ง','อเมริกาโน่น้ำผึ้งมะนาว',
+  'เอสเพรสโซ่','คาปูชิโน่','ลาเต้','มอคค่า',
   'ชาไทย','ชามะนาว','ชาเขียว','น้ำลำไย','โกโก้','นมสด',
   'น้ำส้ม','นมชมพู','นมสดน้ำผึ้ง','นมสดคาราเมล',
   'เพียวมัทฉะ','มัทฉะลาเต้','มัทฉะเลมอนเนด',
@@ -529,7 +530,9 @@ const DRINKS_45 = ['เพียวมัทฉะ','มัทฉะลาเต
 
 // ชื่อไฟล์รูปแต่ละเมนู (อยู่ในโฟลเดอร์ drinks/) — ยังไม่มีไฟล์ก็จะโชว์ช่องว่าง
 const DRINK_IMG = {
-  'อเมริกาโน่':'drinks/americano.svg', 'เอสเพรสโซ่':'drinks/espresso.svg',
+  'อเมริกาโน่':'drinks/americano.svg', 'อเมริกาโน่ส้ม':'drinks/americanoorange.svg',
+  'อเมริกาโน่น้ำผึ้ง':'drinks/americanohoney.svg', 'อเมริกาโน่น้ำผึ้งมะนาว':'drinks/americanohoneylemon.svg',
+  'เอสเพรสโซ่':'drinks/espresso.svg',
   'คาปูชิโน่':'drinks/cappuccino.svg', 'ลาเต้':'drinks/latte.svg',
   'มอคค่า':'drinks/mocha.svg', 'ชาไทย':'drinks/thaitea.svg',
   'ชามะนาว':'drinks/lemontea.svg', 'ชาเขียว':'drinks/greentea.svg',
