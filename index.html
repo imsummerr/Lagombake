@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lagombake — สั่งอาหาร v4</title>
+<title>Lagombake — สั่งอาหาร v5</title>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Sarabun:wght@300;400;500;600&display=swap');
 
@@ -1175,6 +1176,7 @@ function updateSummary(){
 const IMGBB_KEY = 'b86e907815c1ff61d51a30b53375dd59';
 let slipBase64 = null;
 let slipUrl = null;
+let slipQR = null;   // ข้อมูล QR ในสลิป (สำหรับเช็คกับธนาคาร)
 
 function handleSlip(e){
   const file = e.target.files[0];
@@ -1184,6 +1186,7 @@ function handleSlip(e){
     return;
   }
   slipUrl = null;
+  slipQR = null;
   const box = document.getElementById('slip-box');
   box.classList.remove('has-img');
   document.getElementById('slip-preview').style.display = 'none';
@@ -1200,8 +1203,16 @@ function handleSlip(e){
       if(h > MAX){ w = Math.round(w * MAX / h); h = MAX; }
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
       slipBase64 = canvas.toDataURL('image/jpeg', 0.75);
+
+      // อ่าน QR ในสลิป (ใช้เช็คกับธนาคารที่ Apps Script)
+      try {
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const code = (typeof jsQR === 'function') ? jsQR(imgData.data, w, h) : null;
+        slipQR = code && code.data ? code.data : null;
+      } catch { slipQR = null; }
 
       // show preview immediately
       const preview = document.getElementById('slip-preview');
@@ -1349,7 +1360,8 @@ async function submitOrder(){
         items: built.text,
         totalPrice: built.total,
         remark: document.getElementById('remark').value.trim(),
-        slipUrl: slipUrl
+        slipUrl: slipUrl,
+        slipQR: slipQR
       })
     });
     showToast('✓ บันทึกออเดอร์เรียบร้อยแล้ว');
@@ -1503,6 +1515,7 @@ function resetForm(){
   // reset slip
   slipBase64 = null;
   slipUrl = null;
+  slipQR = null;
   document.getElementById('slip-preview').style.display = 'none';
   document.getElementById('slip-preview').src = '';
   document.getElementById('slip-placeholder').style.display = 'block';
