@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<rect width="200" height="200" fill="#f7f3ee"/>
+<!-- หลอด -->
+<rect x="118" y="34" width="9" height="120" rx="4" fill="#c94b5a" transform="rotate(10 122 90)"/>
+<!-- ตัวแก้ว -->
+<path d="M52 74 q0 -6 6 -6 h84 q6 0 6 6 l-8 78 q-1 10 -11 10 h-58 q-10 0 -11 -10 z" fill="#ec7f95" stroke="#dd5f7a" stroke-width="3"/>
+<path d="M46 78 h108 v14 q0 8 -8 8 h-92 q-8 0 -8 -8 z" fill="#f7d0da"/>
+<!-- ฝา -->
+<path d="M46 74 q0 -10 10 -10 h88 q10 0 10 10 q0 6 -6 6 h-96 q-6 0 -6 -6 z" fill="#dd5f7a"/>
+<!-- เงาไฮไลต์ -->
+<path d="M64 84 q-3 30 2 62" stroke="#ffffff" stroke-opacity="0.25" stroke-width="6" fill="none" stroke-linecap="round"/>
+</svg>
