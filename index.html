@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lagombake — สั่งอาหาร v5</title>
+<title>Lagombake — สั่งอาหาร v6</title>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Sarabun:wght@300;400;500;600&display=swap');
@@ -351,6 +351,8 @@
   <div class="card" style="padding:20px;">
     <label class="name-label" for="customerName">ชื่อผู้สั่ง *</label>
     <input class="name-input" id="customerName" type="text" placeholder="กรุณาระบุชื่อ" autocomplete="off">
+    <label class="name-label" for="customerPhone" style="margin-top:14px;">เบอร์โทร *</label>
+    <input class="name-input" id="customerPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="เช่น 0812345678" autocomplete="off">
   </div>
 
   <!-- 1. เมนูน้ำ -->
@@ -1268,6 +1270,15 @@ async function submitOrder(){
   }
   document.getElementById('customerName').classList.remove('error');
 
+  const phone = document.getElementById('customerPhone').value.trim();
+  if(!/^0\d{9}$/.test(phone)){
+    document.getElementById('customerPhone').classList.add('error');
+    document.getElementById('customerPhone').scrollIntoView({ behavior:'smooth', block:'center' });
+    showToast('กรุณากรอกเบอร์โทร 10 หลัก (ขึ้นต้นด้วย 0)', true);
+    return;
+  }
+  document.getElementById('customerPhone').classList.remove('error');
+
   const built = buildOrderText();
   if(!built.text){ showToast('กรุณาเลือกอย่างน้อย 1 เมนู', true); return; }
 
@@ -1357,6 +1368,7 @@ async function submitOrder(){
       headers:{'Content-Type':'text/plain'},
       body: JSON.stringify({
         customerName: name,
+        phone: phone,
         items: built.text,
         totalPrice: built.total,
         remark: document.getElementById('remark').value.trim(),
@@ -1476,6 +1488,8 @@ function buildOrderText(){
 ═══════════════════════════════════════════════════ */
 function resetForm(){
   document.getElementById('customerName').value = '';
+  document.getElementById('customerPhone').value = '';
+  document.getElementById('customerPhone').classList.remove('error');
   document.getElementById('remark').value = '';
   state.openCats.clear();
 
