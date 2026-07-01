@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lagombake — สั่งอาหาร v9</title>
+<title>Lagombake — สั่งอาหาร v10</title>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Sarabun:wght@300;400;500;600&display=swap');
@@ -903,8 +903,7 @@ function toggleFoodExtraFill(type, name, idx, val){
   if(extras.has(val)){
     extras.delete(val);
   } else {
-    if(extras.size >= 2){ showToast('เพิ่มไส้ได้สูงสุด 2 อย่าง', true); return; }
-    extras.add(val);
+    extras.add(val);   // เพิ่มไส้ได้ไม่จำกัด
   }
   rerenderFoodPanel(type, name);
   updateSummary();
@@ -919,7 +918,7 @@ function rerenderFoodPanel(type, name){
 
   el.innerHTML = d.variants.map((v, i) => {
     const fillDis  = (f2) => !v.fillings.has(f2) && v.fillings.size >= 2;
-    const extraDis = (f3) => !v.extraFillings.has(f3) && v.extraFillings.size >= 2;
+    const extraDis = () => false;   // เพิ่มไส้ไม่จำกัดจำนวน
     return `
       <div class="variant-block">
         <div class="variant-header">
@@ -947,7 +946,7 @@ function rerenderFoodPanel(type, name){
               ><span class="chip-dot"></span>${f2}</span>`).join('')}
           </div>
           <p class="fill-hint">${v.fillings.size>0?'เลือกแล้ว '+v.fillings.size+'/2':'⚠ กรุณาเลือกอย่างน้อย 1 ไส้'}</p>
-          <div class="cup-sweet-row-label" style="margin-top:12px;">เพิ่มไส้ <span style="font-weight:400;text-transform:none;color:var(--muted);">(+10 ฿/อย่าง • สูงสุด 2 • ไม่บังคับ)</span></div>
+          <div class="cup-sweet-row-label" style="margin-top:12px;">เพิ่มไส้ <span style="font-weight:400;text-transform:none;color:var(--muted);">(+10 ฿/อย่าง • ไม่จำกัด • ไม่บังคับ)</span></div>
           <div class="chip-grid" style="margin-bottom:4px;">
             ${FILLINGS.map(f3=>`
               <span class="chip ${v.extraFillings.has(f3)?'selected':''} ${extraDis(f3)?'disabled':''}"
