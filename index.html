@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lagombake — สั่งอาหาร v6</title>
+<title>Lagombake — สั่งอาหาร v7</title>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Sarabun:wght@300;400;500;600&display=swap');
@@ -118,6 +118,11 @@
   }
   .row-item:last-of-type { border-bottom: none; }
   .row-name { font-size: 14px; }
+  .drink-thumb {
+    width: 44px; height: 44px; object-fit: cover; border-radius: 8px;
+    background: var(--sand); flex-shrink: 0;
+  }
+  .drink-thumb.no-img { visibility: hidden; }
 
   .qty-ctrl { display: flex; align-items: center; gap: 8px; }
   .qty-btn {
@@ -521,6 +526,20 @@ const DRINKS = [
 ];
 // เมนูที่ราคา 45 บาท
 const DRINKS_45 = ['เพียวมัทฉะ','มัทฉะลาเต้','มัทฉะเลมอนเนด','มัทฉะน้ำส้ม'];
+
+// ชื่อไฟล์รูปแต่ละเมนู (อยู่ในโฟลเดอร์ drinks/) — ยังไม่มีไฟล์ก็จะโชว์ช่องว่าง
+const DRINK_IMG = {
+  'อเมริกาโน่':'drinks/americano.jpg', 'เอสเพรสโซ่':'drinks/espresso.jpg',
+  'คาปูชิโน่':'drinks/cappuccino.jpg', 'ลาเต้':'drinks/latte.jpg',
+  'มอคค่า':'drinks/mocha.jpg', 'ชาไทย':'drinks/thaitea.jpg',
+  'ชามะนาว':'drinks/lemontea.jpg', 'ชาเขียว':'drinks/greentea.jpg',
+  'น้ำลำไย':'drinks/longan.jpg', 'โกโก้':'drinks/cocoa.jpg',
+  'นมสด':'drinks/milk.jpg', 'น้ำส้ม':'drinks/orange.jpg',
+  'นมชมพู':'drinks/pinkmilk.jpg', 'นมสดน้ำผึ้ง':'drinks/honeymilk.jpg',
+  'นมสดคาราเมล':'drinks/caramelmilk.jpg', 'เพียวมัทฉะ':'drinks/matcha.jpg',
+  'มัทฉะลาเต้':'drinks/matchalatte.jpg', 'มัทฉะเลมอนเนด':'drinks/matchalemonade.jpg',
+  'มัทฉะน้ำส้ม':'drinks/matchaorange.jpg', 'สตรอเบอรี่นมสด':'drinks/strawberrymilk.jpg',
+};
 const NO_SWEET   = 'น้ำลำไย';
 const SWEETNESS  = ['มาก','ปกติ','น้อย','ไม่หวาน'];
 
@@ -601,8 +620,9 @@ function renderDrinkList(){
   const el = document.getElementById('drink-list');
   el.innerHTML = DRINKS.map(name => `
     <div class="row-item" id="drink-row-${eid(name)}">
-      <span class="row-name">
-        ${name}${DRINKS_45.includes(name) ? '<span style="font-size:11px;color:var(--muted);margin-left:6px;background:var(--sand);padding:1px 7px;border-radius:20px;">45 ฿</span>' : ''}
+      <span class="row-name" style="display:flex;align-items:center;gap:10px;">
+        <img class="drink-thumb" src="${DRINK_IMG[name]||''}" alt="" loading="lazy" onerror="this.classList.add('no-img')">
+        <span>${name}${DRINKS_45.includes(name) ? '<span style="font-size:11px;color:var(--muted);margin-left:6px;background:var(--sand);padding:1px 7px;border-radius:20px;">45 ฿</span>' : ''}</span>
       </span>
       <button class="add-variant-btn" onclick="addVariant('${name}')">+ เลือก</button>
     </div>
