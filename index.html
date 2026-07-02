@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lagombake — สั่งอาหาร v15</title>
+<title>Lagombake — สั่งอาหาร v16</title>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Sarabun:wght@300;400;500;600&display=swap');
@@ -792,8 +792,7 @@ function toggleRollExtraFill(type, name, idx, val){
   if(extras.has(val)){
     extras.delete(val);
   } else {
-    if(extras.size >= 2){ showToast('เพิ่มไส้ได้สูงสุด 2 อย่าง', true); return; }
-    extras.add(val);
+    extras.add(val);   // เพิ่มไส้ได้ไม่จำกัด
   }
   rerenderRollPanel(type, name);
   updateSummary();
@@ -807,7 +806,7 @@ function rerenderRollPanel(type, name){
   if(d.variants.length === 0){ el.innerHTML = ''; return; }
 
   el.innerHTML = d.variants.map((v, i) => {
-    const extraDis = (f) => !v.extraFillings.has(f) && v.extraFillings.size >= 2;
+    const extraDis = () => false;   // เพิ่มไส้ไม่จำกัดจำนวน
     const sauceHTML = cfg.hasSauce ? `
       <div class="cup-sweet-row-label">น้ำจิ้ม <span style="color:#c0392b;">*</span></div>
       <div class="chip-grid" style="margin-bottom:8px;">
@@ -837,7 +836,7 @@ function rerenderRollPanel(type, name){
               ><span class="chip-dot"></span>${f}</span>`).join('')}
           </div>
           <p class="fill-hint">${v.fillings.size>0?'เลือกแล้ว '+v.fillings.size+'/1':'⚠ กรุณาเลือกอย่างน้อย 1 ไส้'}</p>
-          <div class="cup-sweet-row-label" style="margin-top:12px;">เพิ่มไส้ <span style="font-weight:400;text-transform:none;color:var(--muted);">(+10 ฿/อย่าง • สูงสุด 2 • ไม่บังคับ)</span></div>
+          <div class="cup-sweet-row-label" style="margin-top:12px;">เพิ่มไส้ <span style="font-weight:400;text-transform:none;color:var(--muted);">(+10 ฿/อย่าง • ไม่จำกัด • ไม่บังคับ)</span></div>
           <div class="chip-grid" style="margin-bottom:4px;">
             ${cfg.extraFillings.map(f=>`
               <span class="chip ${v.extraFillings.has(f)?'selected':''} ${extraDis(f)?'disabled':''}"
