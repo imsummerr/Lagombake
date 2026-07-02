@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lagombake — สั่งอาหาร v12</title>
+<title>Lagombake — สั่งอาหาร v13</title>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Sarabun:wght@300;400;500;600&display=swap');
@@ -1121,11 +1121,12 @@ function updateSummary(){
   if(state.openCats.has('saladroll')){
     Object.entries(state.saladroll).forEach(([name,d])=>{
       d.variants.forEach(v=>{
-        const desc = [v.sauce,...[...v.fillings]].filter(Boolean).join(',') || '-';
-        const extraDesc = v.extraFillings.size>0 ? ` +เพิ่มไส้:${[...v.extraFillings].join(',')}` : '';
+        const desc = [v.sauce,...[...v.fillings]].filter(Boolean).join(', ') || 'ยังไม่ได้เลือก';
+        const extraDesc = v.extraFillings.size>0 ? ` +เพิ่มไส้: ${[...v.extraFillings].join(', ')}` : '';
         const qTxt = v.qty>1?` x${v.qty}`:'';
-        parts.push(`${name}${qTxt} [${desc}${extraDesc}]`);
-        total += (29 + v.extraFillings.size*10)*v.qty;
+        const unitPrice = 29 + v.extraFillings.size*10;
+        lines.push({ text:`${name}${qTxt} (${desc})${extraDesc}`, price:unitPrice*v.qty });
+        total += unitPrice*v.qty;
       });
     });
   }
@@ -1134,11 +1135,12 @@ function updateSummary(){
   if(state.openCats.has('mamaroll')){
     Object.entries(state.mamaroll).forEach(([name,d])=>{
       d.variants.forEach(v=>{
-        const desc = [...v.fillings].filter(Boolean).join(',') || '-';
-        const extraDesc = v.extraFillings.size>0 ? ` +เพิ่มไส้:${[...v.extraFillings].join(',')}` : '';
+        const desc = [...v.fillings].filter(Boolean).join(', ') || 'ยังไม่ได้เลือก';
+        const extraDesc = v.extraFillings.size>0 ? ` +เพิ่มไส้: ${[...v.extraFillings].join(', ')}` : '';
         const qTxt = v.qty>1?` x${v.qty}`:'';
-        parts.push(`${name}${qTxt} [${desc}${extraDesc}]`);
-        total += (29 + v.extraFillings.size*10)*v.qty;
+        const unitPrice = 29 + v.extraFillings.size*10;
+        lines.push({ text:`${name}${qTxt} (${desc})${extraDesc}`, price:unitPrice*v.qty });
+        total += unitPrice*v.qty;
       });
     });
   }
@@ -1449,11 +1451,12 @@ function buildOrderText(){
   if(state.openCats.has('saladroll')){
     Object.entries(state.saladroll).forEach(([name,d])=>{
       d.variants.forEach(v=>{
-        const desc = [v.sauce,...[...v.fillings]].filter(Boolean).join(',') || '-';
-        const extraDesc = v.extraFillings.size>0 ? ` +เพิ่มไส้:${[...v.extraFillings].join(',')}` : '';
+        const desc = [v.sauce,...[...v.fillings]].filter(Boolean).join(', ') || 'ยังไม่ได้เลือก';
+        const extraDesc = v.extraFillings.size>0 ? ` +เพิ่มไส้: ${[...v.extraFillings].join(', ')}` : '';
         const qTxt = v.qty>1?` x${v.qty}`:'';
+        const unitPrice = 29 + v.extraFillings.size*10;
         parts.push(`${name}${qTxt} [${desc}${extraDesc}]`);
-        total += (29 + v.extraFillings.size*10)*v.qty;
+        total += unitPrice*v.qty;
       });
     });
   }
@@ -1461,11 +1464,12 @@ function buildOrderText(){
   if(state.openCats.has('mamaroll')){
     Object.entries(state.mamaroll).forEach(([name,d])=>{
       d.variants.forEach(v=>{
-        const desc = [...v.fillings].filter(Boolean).join(',') || '-';
-        const extraDesc = v.extraFillings.size>0 ? ` +เพิ่มไส้:${[...v.extraFillings].join(',')}` : '';
+        const desc = [...v.fillings].filter(Boolean).join(', ') || 'ยังไม่ได้เลือก';
+        const extraDesc = v.extraFillings.size>0 ? ` +เพิ่มไส้: ${[...v.extraFillings].join(', ')}` : '';
         const qTxt = v.qty>1?` x${v.qty}`:'';
+        const unitPrice = 29 + v.extraFillings.size*10;
         parts.push(`${name}${qTxt} [${desc}${extraDesc}]`);
-        total += (29 + v.extraFillings.size*10)*v.qty;
+        total += unitPrice*v.qty;
       });
     });
   }
